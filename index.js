@@ -1,5 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser');
+const morgan = require('morgan')
+
 const app = express()
 
 let persons = [
@@ -26,6 +28,16 @@ let persons = [
 ]
 
 app.use(bodyParser.json());
+
+const morganMiddleware = ((request, response, next) => {
+    console.log('Method:', request.method)
+    console.log('Path:  ', request.path)
+    console.log('Body:  ', request.body)
+    console.log('---')
+    next()
+  })
+
+app.use(morganMiddleware)
 
 app.get('/api/persons', (request, response) => {
     response.json(persons)
