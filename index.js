@@ -1,29 +1,31 @@
 const express = require('express')
 const bodyParser = require('body-parser');
 const morgan = require('morgan')
+const cors = require('cors')
 
 const app = express()
+app.use(cors())
 
 let persons = [
     {
         id: 1,
         name: "Arto Hellas",
-        number: "666777888"
+        phone: "666777888"
     },
     {
         id: 2,
         name: "Ada Lovelace",
-        number: "678678678"
+        phone: "678678678"
     },
     {
         id: 3,
         name: "Dan Abramov",
-        number: "789789789"
+        phone: "789789789"
     },
     {
         id: 4, 
         name: "Mary Poppendick",
-        number: "789789789"
+        phone: "789789789"
     }
 ]
 
@@ -32,7 +34,8 @@ app.use(bodyParser.json());
 const morganMiddleware = ((request, response, next) => {
     console.log('Method:', request.method)
     console.log('Path:  ', request.path)
-    console.log('Body:  ', request.body)
+    console.log('Request body:  ', request.body)
+    console.log('Time:  ', new Date().toISOString())
     console.log('---')
     next()
   })
@@ -44,7 +47,7 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/api/:id', (request, response) => {
-    const id = Number(request.params.id)
+    const id = phone(request.params.id)
     const person = persons.find(person => person.id === id)
 
     if (person) {
@@ -71,34 +74,39 @@ app.get('/info', (request, response) => {
 
 
 app.post('/api/persons', (request, response) => {
-    const person = request.body.person
+    const person = request.body
 
     if (!person.name) { 
         return response.status(400).json({ error: '"name" field is mandatory'})
     }
-    else if (!person.number) {
-        return response.status(400).json({ error: '"number" field is mandatory'})
+    else if (!person.phone) {
+        return response.status(400).json({ error: '"phone" field is mandatory'})
     }
     else if (persons.find(p => p.name === person.name)) {
         return response.status(400).json({ error: `name: ${person.name} is alredy saved in the phonebook`})
     }
-
-    const id = Math.floor(Math.random() * 1000)
-    person.id = id
 
     persons = persons.concat(person)
 
     response.status(201).end()
 })
 
-app.delete('/api/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
+app.delete('/api/persons/:id', (request, response) => {
+    const idToDelete = parseInt(request.params.id)
 
-    response.status(204).end()
+    const indexToDelete = persons.findIndex(person => person.id === idToDelete)
+
+    if (indexToDelete !== -1) {
+        persons.splice(indexToDelete, 1)
+        response.status(204).end()
+    }
+    else {
+        return response.status(404).json({ error: `Person with id: ${idToDelete} could not be deleted`})
+    }
 })
 
 const PORT = 3001
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
