@@ -1,33 +1,14 @@
+require ('dotenv').config()
+
 const express = require('express')
 const bodyParser = require('body-parser');
 const morgan = require('morgan')
 const cors = require('cors')
 
+const Person = require('./models/person')
+
 const app = express()
 app.use(cors())
-
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        phone: "666777888"
-    },
-    {
-        id: 2,
-        name: "Ada Lovelace",
-        phone: "678678678"
-    },
-    {
-        id: 3,
-        name: "Dan Abramov",
-        phone: "789789789"
-    },
-    {
-        id: 4, 
-        name: "Mary Poppendick",
-        phone: "789789789"
-    }
-]
 
 app.use(bodyParser.json());
 
@@ -43,19 +24,23 @@ const morganMiddleware = ((request, response, next) => {
 app.use(morganMiddleware)
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(persons => {
+        response.json(persons)
+      })
 })
 
-app.get('/api/:id', (request, response) => {
-    const id = phone(request.params.id)
-    const person = persons.find(person => person.id === id)
-
-    if (person) {
-        response.json(person)
-    }
-    else {
-        response.status(404).end()
-    }
+app.get('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+    
+    Person.findById(id)
+        .then(person => {
+            if (!person) {
+                response.status(404).json( {error: `Person with id: ${id} was not found`})
+            }
+            else {
+                response.json(person).end()
+            }
+        })
 })
 
 app.get('/info', (request, response) => {
@@ -105,7 +90,7 @@ app.delete('/api/persons/:id', (request, response) => {
     }
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
