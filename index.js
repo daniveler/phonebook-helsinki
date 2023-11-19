@@ -6,6 +6,7 @@ const morgan = require('morgan')
 const cors = require('cors')
 
 const Person = require('./models/person')
+const errors = require('./handlers/errors')
 
 const app = express()
 
@@ -29,28 +30,30 @@ app.get('/api/persons', (request, response) => {
     })
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
+    response.locals.id = id
 
     Person.findById(id)
         .then(person => {
             if (!person) {
-                response.status(404).json({ error: `Person with id: ${id} was not found` })
+                throw new Error('idNotFound')
             }
             else {
                 response.json(person).end()
             }
         })
+        .catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response) => {
     const person = request.body
 
     if (!person.name) {
-        return response.status(400).json({ error: '\"name\" field is mandatory' })
+        return response.status(400).json({ error: 'name field is mandatory' })
     }
     else if (!person.phoneNumber) {
-        return response.status(400).json({ error: '\"phoneNumber\" field is mandatory' })
+        return response.status(400).json({ error: 'phoneNumber field is mandatory' })
     }
     else {
         const newPerson = new Person({
@@ -65,13 +68,24 @@ app.post('/api/persons', (request, response) => {
     } 
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
     const idToDelete = request.params.id
+    response.locals.id = idToDelete
 
     Person.findByIdAndDelete(idToDelete)
-        .then(response.status(204).end())
-        .catch(error => response.status(404).json({ error: `Person with id: ${idToDelete} could not be deleted` }))
+        .then(person => {
+            if (!person) {
+                throw new Error('idNotFound')
+            }
+            else {
+                response.status(204).end()
+            }
+        })
+        .catch(error => next(error))
 })
+
+app.use(errors.malformattedId)
+app.use(errors.idNotFound)
 
 const PORT = process.env.PORT || 3001
 
