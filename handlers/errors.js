@@ -12,22 +12,7 @@ const idNotFound = (error, request, response, next) => {
     }
 }
 
-const nameNotIncluded = (error, request, response, next) => {
-    if (error.message == 'nameNotIncluded') {
-        return response.status(400).json({ error: '\"name\" field is mandatory' })
-    }
-}
-
-const phoneNumberNotIncluded = (error, request, response, next) => {
-    if (error.message == 'phoneNumberNotIncluded') {
-        return response.status(400).json({ error: '\"phoneNumber\" field is mandatory' })    
-    }
-}
-
-
-
 module.exports = {
     malformattedId,
     idNotFound,
-    nameNotIncluded
 }
