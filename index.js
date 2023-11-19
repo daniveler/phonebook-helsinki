@@ -84,6 +84,22 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id
+    response.locals.id = id
+
+    const newPerson = {
+        name: request.body.name,
+        phoneNumber: request.body.phoneNumber
+    }
+
+    Person.findByIdAndUpdate(id, newPerson, { new: true })
+        .then(updatedPerson => {
+            return response.status(201).json(updatedPerson)
+        })
+        .catch(error => next(error))
+})
+
 app.use(errors.malformattedId)
 app.use(errors.idNotFound)
 
