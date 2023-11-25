@@ -11,7 +11,7 @@ const errors = require('./handlers/errors')
 const app = express()
 
 app.use(cors())
-app.use(bodyParser.json());
+app.use(bodyParser.json())
 
 const morganMiddleware = ((request, response, next) => {
     console.log('Method:', request.method)
@@ -46,7 +46,7 @@ app.get('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const person = request.body
 
     if (!person.name) {
@@ -62,10 +62,12 @@ app.post('/api/persons', (request, response) => {
             phoneNumber: person.phoneNumber
         })
 
-        newPerson.save().then(savedPerson => {
-            response.status(201).end()
-        })
-    } 
+        newPerson.save()
+            .then(savedPerson => {
+                response.status(201).end()
+            })
+            .catch(error => next(error))
+    }
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -102,6 +104,7 @@ app.put('/api/persons/:id', (request, response, next) => {
 
 app.use(errors.malformattedId)
 app.use(errors.idNotFound)
+app.use(errors.validationError)
 
 const PORT = process.env.PORT || 3001
 
